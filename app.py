@@ -14,16 +14,24 @@ def account():
 @app.route('/login/')
 def login():
     return flask.render_template("accounts/login.html")
+
+@app.route('/registration/')
+def registration():
+    return flask.render_template("accounts/registration.html")
+
+@app.route('/create/')
+def create():
+    return flask.render_template("posts/create.html")
     
-@app.route('/')
+@app.route('/posts')
 def posts():
     return flask.render_template("posts/posts.html")
 
-@app.route('/')
+@app.route('/update')
 def update():
     return flask.render_template("posts/update.html")
 
-@app.route('/')
+@app.route('/security')
 def security():
     return flask.render_template("security/security.html")
 
