@@ -18,13 +18,13 @@
     <nav class="nav nav-pills flex-column flex-sm-row">
 
         <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
-        <a class="nav-item nav-link" href="{{ url_for('registration') }}">Register</a>
-        <a class="nav-item nav-link" href="{{ url_for('login') }}">Login</a>
-        <a class="nav-item nav-link" href="{{ url_for('account') }}">Account</a>
-        <a class="nav-item nav-link" href="{{ url_for('posts') }}">Posts</a>
-        <a class="nav-item nav-link" href="{{ url_for('create') }}">Create</a>
-        <a class="nav-item nav-link" href="{{ url_for('update') }}">Update</a>
-        <a class="nav-item nav-link" href="{{ url_for('security') }}">Security</a>
+        <a class="nav-item nav-link" href="{{ url_for('accounts.registration') }}">Register</a>
+        <a class="nav-item nav-link" href="{{ url_for('accounts.login') }}">Login</a>
+        <a class="nav-item nav-link" href="{{ url_for('accounts.account') }}">Account</a>
+        <a class="nav-item nav-link" href="{{ url_for('posts.posts') }}">Posts</a>
+        <a class="nav-item nav-link" href="{{ url_for('posts.create') }}">Create</a>
+        <a class="nav-item nav-link" href="{{ url_for('posts.update') }}">Update</a>
+        <a class="nav-item nav-link" href="{{ url_for('security.security') }}">Security</a>
    
    </nav>
    <div class="container-fluid p-3 my-5 text-center">
