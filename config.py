@@ -9,6 +9,11 @@ from datetime import datetime
 from accounts.views import accounts_bp
 from posts.views import posts_bp
 from security.views import security_bp
+#database admin stuff
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
+from flask_admin.menu import MenuLink
+import secrets
 
 app = flask.Flask(__name__)
 
@@ -20,7 +25,18 @@ app.register_blueprint(accounts_bp)
 app.register_blueprint(posts_bp)
 app.register_blueprint(security_bp)
 
-#databse config
+
+
+##
+#
+#
+# databse config
+# 
+# 
+##
+
+
+app.config['SECRET_KEY'] = secrets.token_hex(16)
 
 # DATABASE CONFIGURATION
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///csc2031blog.db'
@@ -53,3 +69,21 @@ class Post(db.Model):
         self.created = datetime.now()
         self.title = title
         self.body = body
+
+
+#Admin 
+
+class MainIndexLink(MenuLink):
+     def get_url(self):
+         return flask.url_for('index')
+
+class PostView(ModelView):
+     column_display_pk = True  
+     column_hide_backrefs = False
+     column_list = ('id', 'created', 'title', 'body')
+
+
+admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
+admin._menu = admin._menu[1:] 
+admin.add_link(MainIndexLink(name='Home Page'))
+admin.add_view(PostView(Post, db.session))
