@@ -61,9 +61,11 @@ class Post(db.Model):
     __tablename__ = 'posts'
 
     id = db.Column(db.Integer, primary_key=True)
+    userid = db.Column(db.Integer, db.ForeignKey('users.id'))
     created = db.Column(db.DateTime, nullable=False)
     title = db.Column(db.Text, nullable=False)
     body = db.Column(db.Text, nullable=False)
+    user = db.relationship("User", back_populates="posts")
 
     def __init__(self, title, body):
         self.created = datetime.now()
@@ -95,3 +97,27 @@ admin.add_link(MainIndexLink(name='Home Page'))
 admin.add_view(PostView(Post, db.session))
 
 
+#users
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # User authentication information.
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    password = db.Column(db.String(100), nullable=False)
+
+    # User information
+    firstname = db.Column(db.String(100), nullable=False)
+    lastname = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(100), nullable=False)
+
+    # User posts
+    posts = db.relationship("Post", order_by=Post.id, back_populates="user")
+
+    def __init__(self, email, firstname, lastname, phone, password):
+        self.email = email
+        self.firstname = firstname
+        self.lastname = lastname
+        self.phone = phone
+        self.password = password
