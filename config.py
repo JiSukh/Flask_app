@@ -70,6 +70,12 @@ class Post(db.Model):
         self.title = title
         self.body = body
 
+    def update(self, title, body):
+        self.created = datetime.now()
+        self.title = title
+        self.body = body
+        db.session.commit()
+
 
 #Admin 
 
@@ -87,3 +93,5 @@ admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
 admin._menu = admin._menu[1:] 
 admin.add_link(MainIndexLink(name='Home Page'))
 admin.add_view(PostView(Post, db.session))
+
+
