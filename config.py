@@ -121,6 +121,13 @@ class User(db.Model):
         self.password = password
 
 
+    def verify_password(self, input_password):
+        if self.password.strip() == input_password.strip():
+            return True
+        else:
+            return False
+
+
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
 admin._menu = admin._menu[1:] 
 admin.add_link(MainIndexLink(name='Home Page'))
