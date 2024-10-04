@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, flash, url_for, redirect
 import config
 from posts.forms import PostForm
+from sqlalchemy import desc
 
 
 
@@ -24,7 +25,8 @@ def create():
     
 @posts_bp.route('/posts')
 def posts():
-    return render_template("posts/posts.html")
+    all_posts = config.Post.query.order_by(desc('id')).all()
+    return render_template('posts/posts.html', posts=all_posts)
 
 @posts_bp.route('/update')
 def update():
