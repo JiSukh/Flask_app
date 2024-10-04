@@ -88,14 +88,12 @@ class MainIndexLink(MenuLink):
 class PostView(ModelView):
      column_display_pk = True  
      column_hide_backrefs = False
-     column_list = ('id', 'created', 'title', 'body')
+     column_list = ('id', 'userid', 'created', 'title', 'body', 'user')
 
-
-admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
-admin._menu = admin._menu[1:] 
-admin.add_link(MainIndexLink(name='Home Page'))
-admin.add_view(PostView(Post, db.session))
-
+class UserView(ModelView):
+    column_display_pk = True  # optional, but I like to see the IDs in the list
+    column_hide_backrefs = False
+    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts')
 
 #users
 class User(db.Model):
@@ -121,3 +119,10 @@ class User(db.Model):
         self.lastname = lastname
         self.phone = phone
         self.password = password
+
+
+admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
+admin._menu = admin._menu[1:] 
+admin.add_link(MainIndexLink(name='Home Page'))
+admin.add_view(PostView(Post, db.session))
+admin.add_view(UserView(User, db.session))
