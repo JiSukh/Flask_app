@@ -14,8 +14,24 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.menu import MenuLink
 import secrets
+#.env to hide keys
+import os
+from dotenv import load_dotenv
+
+
+# captcha keys
+load_dotenv()
+RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_API_KEY')
+RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_API_KEY')
+
 
 app = flask.Flask(__name__)
+app.config.from_object(__name__)
+
+
+
+
+
 
 
 
@@ -34,6 +50,7 @@ app.register_blueprint(security_bp)
 # 
 # 
 ##
+
 
 
 app.config['SECRET_KEY'] = secrets.token_hex(16)

@@ -24,9 +24,11 @@ def login():
         if user and user.verify_password(input_password=form.password.data):
             flash('Logged in.', category='success')
             return redirect(url_for('posts.posts'))
-
         else:
-            flash('Account does not exists or you have entered the wrong password.', category='warning')
+            if form.recaptcha.errors:
+                flash('Error with recaptcha, please ensure you complete recapture', category='danger')
+            else:
+                flash('Account does not exists or you have entered the wrong password.', category='warning')
         
 
     return render_template('accounts/login.html', form = form)
