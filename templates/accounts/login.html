@@ -6,7 +6,7 @@
     <div class="p-2 row">
         <div class="col-3"></div>
         <div class="col-6">
-
+            {%if form%}
             <form method="POST">
                 <div class="p-2 bg-light border border-primary">
                     <div style="text-align: left">
@@ -24,7 +24,7 @@
                             {% endfor %}
                             {% endwith %}
                         </div>
-
+                        
                         <div class="form-group">
                             {{ form.email.label}}<span style="color: red">*</span>
                             {{ form.email(class="form-control") }}
@@ -35,15 +35,23 @@
                             {{ form.password(class="form-control") }}
                         </div>
 
-                    </div>
-                    <div>
-                        {{ form.recaptcha }}
-                    </div>
-                    <div>                     
-                        {{ form.submit(class="btn btn-success") }}
-                    </div>
+                        </div>
+                        <div>
+                            {{ form.recaptcha }}
+                        </div>
+                        <div>                     
+                            {{ form.submit(class="btn btn-success") }}
+                        </div>
+                    
                 </div>
             </form>
+
+            {% else %}
+            <div class="alert alert-danger mt-3">
+                You have exceeded the maximum login attempts. 
+                <a href="{{ url_for('accounts.unlock') }}" class="alert-link">Click here to reset your attempts</a>.
+            </div>
+            {% endif %}
 
         </div>
         <div class="col-3"></div>

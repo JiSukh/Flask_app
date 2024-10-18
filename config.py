@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 load_dotenv()
 RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_API_KEY')
 RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_API_KEY')
+maximum_login_attempt = 3
 
 
 app = flask.Flask(__name__)
