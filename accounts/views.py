@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, session, get_flashed_messages
 from accounts.forms import RegistrationForm, LoginForm
 from markupsafe import Markup
+from flask_limiter import Limiter
 import config
 import re
 
@@ -100,3 +101,6 @@ def registration():
         return redirect(url_for('accounts.login'))
 
     return render_template('accounts/registration.html', form=form)
+
+
+

@@ -13,6 +13,9 @@ from security.views import security_bp
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.menu import MenuLink
+#rate limit
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import secrets
 #.env to hide keys
 import os
@@ -30,6 +33,8 @@ app = flask.Flask(__name__)
 app.config.from_object(__name__)
 
 
+#rate limiting
+limiter = Limiter(get_remote_address,app = app,default_limits=["20 per minute", "500 per day"])
 
 
 
