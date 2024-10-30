@@ -2,12 +2,14 @@ from flask import Blueprint, render_template, flash, redirect, url_for, session,
 from accounts.forms import RegistrationForm, LoginForm
 from markupsafe import Markup
 from flask_limiter import Limiter
+import pyotp
 import config
 import re
 
 
 
 accounts_bp = Blueprint('accounts', __name__, template_folder='templates')
+
 
 
 @accounts_bp.route('/account')
@@ -38,9 +40,23 @@ def login():
 
         # If user exists, verify the password
         if user and user.verify_password(input_password=form.password.data):
-            flash('Logged in.', category='success')
-            session[session_id] = config.maximum_login_attempt #reset attempts on successful login
-            return redirect(url_for('posts.posts'))
+            pin_correct = user.verify_mfa_pin(input_pin = form.mfa_pin.data)
+            #verify MFA enabled
+            if not user.verify_mfa_enabled() and not pin_correct: #pin not enabled + wrong pin entered
+                flash('You have not enabled Multi-Factor Authentication. Please enable first to login.', category='error')
+                qrURI = str(pyotp.totp.TOTP(user.mfa_key).provisioning_uri(form.email.data, 'CSC2035 BLOG'))
+                return render_template('accounts/setup_mfa.html', secret=user.mfa_key, URI = qrURI)
+            elif not pin_correct: #if pin is incorrect
+                flash('Incorrect pin entered', category='error')
+                return render_template('accounts/login.html', form = form)
+            else: #if pin correct
+                flash('Logged in.', category='success')
+                #if MFa not enabled, set to true of successful login.
+                if not user.verify_mfa_enabled():
+                    user.mfa_enable = True
+                    config.db.session.commit()
+                session[session_id] = config.maximum_login_attempt #reset attempts on successful login
+                return redirect(url_for('posts.posts'))
         else:
             session[session_id] -= 1
             attempts = session[session_id]
@@ -86,19 +102,27 @@ def registration():
             flash('Password is not strong enough.', category="warning")
             return render_template('accounts/registration.html', form=form)
 
+
+
+
         #create new user
         new_user = config.User(email=form.email.data,
                         firstname=form.firstname.data,
                         lastname=form.lastname.data,
                         phone=form.phone.data,
                         password=form.password.data,
+                        mfa_key= pyotp.random_base32(),
+                        mfa_enable = False
                         )
         #add to db
         config.db.session.add(new_user)
         config.db.session.commit()
 
-        flash('Account Created', category='success')
-        return redirect(url_for('accounts.login'))
+        
+
+        flash('Account Created. You must set up Multi-Factor Authentication to login.', category='success')
+        qrURI = str(pyotp.totp.TOTP(new_user.mfa_key).provisioning_uri(form.email.data, 'CSC2035 BLOG'))
+        return render_template('accounts/setup_mfa.html', secret=new_user.mfa_key, URI = qrURI)
 
     return render_template('accounts/registration.html', form=form)
 

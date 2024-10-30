@@ -19,7 +19,10 @@ from flask_limiter.util import get_remote_address
 import secrets
 #.env to hide keys
 import os
+import pyotp
 from dotenv import load_dotenv
+from flask_qrcode import QRcode
+
 
 
 # captcha keys
@@ -36,6 +39,7 @@ app.config.from_object(__name__)
 #rate limiting
 limiter = Limiter(get_remote_address,app = app,default_limits=["20 per minute", "500 per day"])
 
+qrcode = QRcode(app)
 
 
 
@@ -65,6 +69,7 @@ app.config['SECRET_KEY'] = secrets.token_hex(16)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///csc2031blog.db'
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['FLASK_ADMIN_FLUID_LAYOUT'] = True
 
 metadata = MetaData(
     naming_convention={
@@ -116,7 +121,7 @@ class PostView(ModelView):
 class UserView(ModelView):
     column_display_pk = True  # optional, but I like to see the IDs in the list
     column_hide_backrefs = False
-    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts')
+    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enable', 'mfa_key')
 
 #users
 class User(db.Model):
@@ -132,20 +137,36 @@ class User(db.Model):
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(100), nullable=False)
+    mfa_key = db.Column(db.Integer, nullable=False)
+    mfa_enable = db.Column(db.Integer, nullable=False)
 
     # User posts
     posts = db.relationship("Post", order_by=Post.id, back_populates="user")
 
-    def __init__(self, email, firstname, lastname, phone, password):
+    def __init__(self, email, firstname, lastname, phone, password, mfa_enable, mfa_key):
         self.email = email
         self.firstname = firstname
         self.lastname = lastname
         self.phone = phone
         self.password = password
+        self.mfa_key = mfa_key
+        self.mfa_enable = mfa_enable
 
 
     def verify_password(self, input_password):
         if self.password.strip() == input_password.strip():
+            return True
+        else:
+            return False
+        
+    def verify_mfa_pin(self, input_pin):
+        if pyotp.TOTP(self.mfa_key).verify(input_pin):
+            return True
+        else:
+            return False
+        
+    def verify_mfa_enabled(self):
+        if self.mfa_enable == 1:
             return True
         else:
             return False

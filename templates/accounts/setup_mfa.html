@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Setup MFA for this account.</h1>
+    <div class="col-3"></div>
+    <div class="col-6">
+        <div class="p-2 row">
+            <div class="p-2 bg-light border border-primary">
+                <div style="text-align: left">
+
+                    <div>
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} mt-3 alert-dismissible" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    onclick=delete_flash(this)>
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+                <div class="p-2">
+                    Open Miscrosoft Authenticator on phone, or use signup through there.
+                </div>
+                <div class="p-2">
+                    Alternatively use Google Authenticator
+                </div>
+                <div class="p-2">
+                    Select new account and enter code below:
+                </div>
+                <div class="p-2 bg-light border border-primary">
+                    <h2>CODE</h2>
+                    {{ secret }}
+                    <h2>QR</h2>
+                    <img src="{{ qrcode(URI, box_size=5, border=5) }}"">
+                </div>
+                <div>
+                    Once completed, please click <a href="{{ url_for('accounts.login') }}">here</a> to login.
+                </div>
+            </div>
+        </div>
+        </div>
+</div>
+{% endblock %}
