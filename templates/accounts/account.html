@@ -1,5 +1,59 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
     <h1>Account</h1>
+    <div class="p-2 row">
+        <div class="col-2"></div>
+        <div class="col-8">
+            <div class="p-2 bg-light border border-primary" style="text-align: left">
+                <div>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mt-3 alert-dismissible" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                onclick=delete_flash(this)>
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                    {% endwith %}
+                </div>
+                    <div class="card border border-dark">
+                        <div class="card-header card-body border border-dark">
+                            <label><b>Account no:</b></label><p> {{ user.id }} </p>
+                            <label><b>Email:</b></label> <p> {{ user.emaik }} </p>
+                            <label><b>First name:</b></label> <p> {{ user.firstname }} </p>
+                            <label><b>Last name:</b></label> <p> {{ user.lastname }} </p>
+                            <label><b>Phone:</b></label> <p> {{ user.phone }} </p>
+                            <label><b>Posts:</b></label>
+                            {% for post in current_user.posts %}
+                            <div class="card border border-dark">
+                                <div class="card-header bg-dark text-white border border-dark">
+                                    <h4>{{ post.title }}</h4>
+                                    <small>Author:{{ post.user.firstname }} {{ post.user.lastname }}</small>
+                                    <small>{{ post.created.strftime('%H:%M:%S %d-%m-%Y') }}</small>
+                                </div>
+                                <div class="card-body">{{ post.body }}</div>
+        
+        
+                                <div class="card-footer">
+                                    <a class="navbar-item" href="{{ url_for('posts.update', id=post.id) }}">Update</a>
+                                    <a class="navbar-item" href="{{ url_for('posts.delete', id=post.id) }}">Delete</a>
+                                </div>
+                                </div>
+                            <br>
+                            {% endfor %}
+                        </div>
+
+
+
+                    </div>
+                    <br>
+            </div>
+        </div>
+        <div class="col-2"></div>
+    </div>
+</div>
 {% endblock %}

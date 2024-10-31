@@ -18,6 +18,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import secrets
 #.env to hide keys
+from flask_login import LoginManager, UserMixin
 import os
 import pyotp
 from dotenv import load_dotenv
@@ -39,10 +40,11 @@ app.config.from_object(__name__)
 #rate limiting
 limiter = Limiter(get_remote_address,app = app,default_limits=["20 per minute", "500 per day"])
 
+
 qrcode = QRcode(app)
 
-
-
+login_manager = LoginManager(app)
+login_manager.init_app(app)
 
 
 ## Add blueprints
@@ -95,7 +97,8 @@ class Post(db.Model):
     body = db.Column(db.Text, nullable=False)
     user = db.relationship("User", back_populates="posts")
 
-    def __init__(self, title, body):
+    def __init__(self, userid, title, body):
+        self.userid = userid
         self.created = datetime.now()
         self.title = title
         self.body = body
@@ -124,7 +127,7 @@ class UserView(ModelView):
     column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enable', 'mfa_key')
 
 #users
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -139,6 +142,7 @@ class User(db.Model):
     phone = db.Column(db.String(100), nullable=False)
     mfa_key = db.Column(db.Integer, nullable=False)
     mfa_enable = db.Column(db.Integer, nullable=False)
+    active = db.Column(db.Boolean(), nullable=False, default=True)
 
     # User posts
     posts = db.relationship("Post", order_by=Post.id, back_populates="user")
@@ -152,6 +156,9 @@ class User(db.Model):
         self.mfa_key = mfa_key
         self.mfa_enable = mfa_enable
 
+    @login_manager.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
 
     def verify_password(self, input_password):
         if self.password.strip() == input_password.strip():
@@ -170,6 +177,8 @@ class User(db.Model):
             return True
         else:
             return False
+        
+    
 
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')

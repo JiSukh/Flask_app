@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, session, get_flashed_messages
 from accounts.forms import RegistrationForm, LoginForm
+from flask_login import login_user, current_user
 from markupsafe import Markup
 from flask_limiter import Limiter
 import pyotp
@@ -14,7 +15,10 @@ accounts_bp = Blueprint('accounts', __name__, template_folder='templates')
 
 @accounts_bp.route('/account')
 def account():
-    return render_template("accounts/account.html")
+    if current_user:
+        return render_template("accounts/account.html", user = current_user)
+    else:
+        return render_template("accounts/account.html")
 
 @accounts_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -40,17 +44,25 @@ def login():
 
         # If user exists, verify the password
         if user and user.verify_password(input_password=form.password.data):
+            ################################testing
+            #pin_correct = True
+            #mfa_enabled = True
+            #################################testing
+
+
             pin_correct = user.verify_mfa_pin(input_pin = form.mfa_pin.data)
+            mfa_enabled = user.verify_mfa_enabled()
             #verify MFA enabled
-            if not user.verify_mfa_enabled() and not pin_correct: #pin not enabled + wrong pin entered
+            if not mfa_enabled and not pin_correct: #pin not enabled + wrong pin entered
                 flash('You have not enabled Multi-Factor Authentication. Please enable first to login.', category='error')
                 qrURI = str(pyotp.totp.TOTP(user.mfa_key).provisioning_uri(form.email.data, 'CSC2035 BLOG'))
                 return render_template('accounts/setup_mfa.html', secret=user.mfa_key, URI = qrURI)
-            elif not pin_correct: #if pin is incorrect
+            elif mfa_enabled and not pin_correct: #if pin is incorrect
                 flash('Incorrect pin entered', category='error')
                 return render_template('accounts/login.html', form = form)
             else: #if pin correct
-                flash('Logged in.', category='success')
+                login_user(user)
+                flash(f'Logged in.', category='success')
                 #if MFa not enabled, set to true of successful login.
                 if not user.verify_mfa_enabled():
                     user.mfa_enable = True

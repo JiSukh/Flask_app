@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, flash, url_for, redirect
+from flask_login import current_user
 import config
 from posts.forms import PostForm
 from sqlalchemy import desc
@@ -12,8 +13,10 @@ posts_bp = Blueprint('posts', __name__, template_folder='templates')
 def create():
     form = PostForm()
 
+
+
     if form.validate_on_submit():
-        new_post = config.Post(title=form.title.data, body=form.body.data)
+        new_post = config.Post(userid=current_user.get_id(),title=form.title.data, body=form.body.data)
 
         config.db.session.add(new_post)
         config.db.session.commit()
