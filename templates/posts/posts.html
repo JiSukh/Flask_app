@@ -29,11 +29,12 @@
                         </div>
                         <div class="card-body">{{ post.body }}</div>
 
-
+                        {% if current_user.id == post.userid %}
                         <div class="card-footer">
                             <a class="navbar-item" href="{{ url_for('posts.update', id=post.id) }}">Update</a>
                             <a class="navbar-item" href="{{ url_for('posts.delete', id=post.id) }}">Delete</a>
                         </div>
+                        {% endif %}
                     </div>
                     <br>
                 {% endfor %}

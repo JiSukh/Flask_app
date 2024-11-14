@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, session, get_flashed_messages
 from accounts.forms import RegistrationForm, LoginForm
-from flask_login import login_user, current_user
+from flask_login import login_user, current_user, login_required
 from markupsafe import Markup
 from flask_limiter import Limiter
 import pyotp
@@ -14,6 +14,7 @@ accounts_bp = Blueprint('accounts', __name__, template_folder='templates')
 
 
 @accounts_bp.route('/account')
+@login_required
 def account():
     if current_user:
         return render_template("accounts/account.html", user = current_user)
@@ -27,6 +28,10 @@ def login():
     #session authentication limit
 
     session_id = 'login_attempts'
+
+    if current_user.is_authenticated:
+        flash("You are already logged in.", category='info')
+        return redirect(url_for('posts.posts'))
 
     if session.get(session_id) is None:
         session[session_id] = config.maximum_login_attempt
@@ -97,6 +102,10 @@ def unlock():
 def registration():
 
     form = RegistrationForm()
+
+    if current_user.is_authenticated:
+        flash("You are already logged in.", category='info')
+        return redirect(url_for('posts.posts'))
 
     if form.validate_on_submit():
 
