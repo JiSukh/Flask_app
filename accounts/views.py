@@ -3,6 +3,7 @@ from accounts.forms import RegistrationForm, LoginForm
 from flask_login import login_user, current_user, login_required
 from markupsafe import Markup
 from flask_limiter import Limiter
+from utils import roles_required
 import pyotp
 import config
 import re
@@ -73,7 +74,15 @@ def login():
                     user.mfa_enable = True
                     config.db.session.commit()
                 session[session_id] = config.maximum_login_attempt #reset attempts on successful login
-                return redirect(url_for('posts.posts'))
+
+                #Check user privilegedes
+                if current_user.role == 'db_admin':
+                    return redirect('http://127.0.0.1:5000/admin')
+                elif current_user.role == 'sec_admin':
+                    return render_template('security/security.html')
+                elif current_user.role == 'end_user':#
+                    return redirect(url_for('posts.posts'))
+
         else:
             session[session_id] -= 1
             attempts = session[session_id]

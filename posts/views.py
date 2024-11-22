@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, flash, url_for, redirect
 from flask_login import current_user,login_required
+from utils import roles_required
 import config
 from posts.forms import PostForm
 from sqlalchemy import desc
@@ -11,6 +12,7 @@ posts_bp = Blueprint('posts', __name__, template_folder='templates')
 
 @posts_bp.route('/create/', methods=('GET', 'POST'))
 @login_required
+@roles_required('end_user')
 def create():
     form = PostForm()
 
@@ -29,12 +31,14 @@ def create():
     
 @posts_bp.route('/posts')
 @login_required
+@roles_required('end_user')
 def posts():
     all_posts = config.Post.query.order_by(desc('id')).all()
     return render_template('posts/posts.html', posts=all_posts)
 
 @posts_bp.route('/<int:id>/update', methods=('GET', 'POST'))
 @login_required
+@roles_required('end_user')
 def update(id):
 
 
@@ -62,6 +66,7 @@ def update(id):
 
 @posts_bp.route('/<int:id>/delete')
 @login_required
+@roles_required('end_user')
 def delete(id):
 
 

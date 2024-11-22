@@ -1,4 +1,4 @@
-import flask
+from flask import Flask, abort, url_for
 from datetime import datetime
 #database improt
 from flask_sqlalchemy import SQLAlchemy
@@ -18,7 +18,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import secrets
 #.env to hide keys
-from flask_login import LoginManager, UserMixin
+from flask_login import LoginManager, UserMixin, current_user
 import os
 import pyotp
 from dotenv import load_dotenv
@@ -33,21 +33,17 @@ RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_API_KEY')
 maximum_login_attempt = 3
 
 
-app = flask.Flask(__name__)
+app = Flask(__name__)
 app.config.from_object(__name__)
 
 
 #rate limiting
 limiter = Limiter(get_remote_address,app = app,default_limits=["20 per minute", "500 per day"])
 
-
 qrcode = QRcode(app)
-
 login_manager = LoginManager(app)
 login_manager.init_app(app)
-
 login_manager.login_view = '/login'
-
 login_manager.login_message = "Please login to acces the page"
 login_manager.login_message_category = 'info'
 
@@ -60,13 +56,6 @@ app.register_blueprint(security_bp)
 
 
 
-##
-#
-#
-# databse config
-# 
-# 
-##
 
 
 
@@ -119,18 +108,51 @@ class Post(db.Model):
 
 class MainIndexLink(MenuLink):
      def get_url(self):
-         return flask.url_for('index')
+         return url_for('index')
+
+
+
 
 class PostView(ModelView):
-     column_display_pk = True  
-     column_hide_backrefs = False
-     column_list = ('id', 'userid', 'created', 'title', 'body', 'user')
+    column_display_pk = True  
+    column_hide_backrefs = False
+    column_list = ('id', 'userid', 'created', 'title', 'body', 'user')
 
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role == 'db_admin'
+    
+    def inaccessible_callback(self, name, **kwargs):
+        abort(403)
+        
 class UserView(ModelView):
     column_display_pk = True  # optional, but I like to see the IDs in the list
     column_hide_backrefs = False
     column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enable', 'mfa_key')
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role == 'db_admin'
+    
+    def inaccessible_callback(self, name, **kwargs):
+        abort(403)
 
+class LogView(ModelView):
+    column_display_pk = True  # optional, but I like to see the IDs in the list
+    column_hide_backrefs = False
+
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.role == 'db_admin'
+    
+    def inaccessible_callback(self, name, **kwargs):
+        abort(403)
+
+class Log(db.Model):
+    __tablename__ = 'logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    userid = db.Column(db.Integer, nullable=False)
+    reg_time = db.Column(db.DateTime, nullable=False)
+    latest_login = db.Column(db.DateTime)
+    previous_login = db.Column(db.DateTime)
 #users
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -148,6 +170,7 @@ class User(db.Model, UserMixin):
     mfa_key = db.Column(db.Integer, nullable=False)
     mfa_enable = db.Column(db.Integer, nullable=False)
     active = db.Column(db.Boolean(), nullable=False, default=True)
+    role = db.Column(db.String(), nullable=False, default='end_user')
 
     # User posts
     posts = db.relationship("Post", order_by=Post.id, back_populates="user")
@@ -160,6 +183,7 @@ class User(db.Model, UserMixin):
         self.password = password
         self.mfa_key = mfa_key
         self.mfa_enable = mfa_enable
+        self.role = 'end_user'
 
     @login_manager.user_loader
     def load_user(id):
@@ -182,12 +206,11 @@ class User(db.Model, UserMixin):
             return True
         else:
             return False
-        
-    
-
+       
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
 admin._menu = admin._menu[1:] 
 admin.add_link(MainIndexLink(name='Home Page'))
 admin.add_view(PostView(Post, db.session))
 admin.add_view(UserView(User, db.session))
+
