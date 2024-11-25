@@ -3,7 +3,7 @@ from datetime import datetime
 #database improt
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, event
 from datetime import datetime
 # IMPORT BLUEPRINTS
 from accounts.views import accounts_bp
@@ -19,6 +19,7 @@ from flask_limiter.util import get_remote_address
 import secrets
 #.env to hide keys
 from flask_login import LoginManager, UserMixin, current_user
+import logging
 import os
 import pyotp
 from dotenv import load_dotenv
@@ -55,8 +56,13 @@ app.register_blueprint(posts_bp)
 app.register_blueprint(security_bp)
 
 
-
-
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler('./log/logs.log','a')
+handler.setLevel(logging.DEBUG) 
+formatter = logging.Formatter('%(asctime)s - %(levelname)s : %(message)s', '%d/%m/%Y %H:%M:%S')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 app.config['SECRET_KEY'] = secrets.token_hex(16)
@@ -81,6 +87,7 @@ metadata = MetaData(
 db = SQLAlchemy(app, metadata=metadata)
 migrate = Migrate(app, db)
 
+
 class Post(db.Model):
     __tablename__ = 'posts'
 
@@ -89,7 +96,7 @@ class Post(db.Model):
     created = db.Column(db.DateTime, nullable=False)
     title = db.Column(db.Text, nullable=False)
     body = db.Column(db.Text, nullable=False)
-    user = db.relationship("User", back_populates="posts")
+    user = db.relationship("User", back_populates="posts",)
 
     def __init__(self, userid, title, body):
         self.userid = userid
@@ -104,7 +111,22 @@ class Post(db.Model):
         db.session.commit()
 
 
-#Admin 
+@event.listens_for(Post, 'after_insert')
+def log_create_post(mapper, connection, target):
+    logger.info(f'[User:{current_user.email}, Role:{current_user.role}, Post ID: {target.id}, IP:{request.remote_addr}] Post created.')
+
+
+@event.listens_for(Post, 'after_update')
+def log_update_post(mapper, connection, target):
+    user = db.session.query(User).filter_by(id=target.userid).first()
+    logger.info(f'[User:{current_user.email}, Role:{current_user.role}, Post ID: {target.id}, IP:{request.remote_addr}, Poster Email: {user.email}] Post updated.')
+
+
+@event.listens_for(Post, 'after_delete')
+def log_delete_post(mapper, connection, target):
+    user = db.session.query(User).filter_by(id=target.userid).first()
+    logger.info(f'[User:{current_user.email}, Role:{current_user.role}, Post ID: {target.id}, IP:{request.remote_addr}, Poster Email: {user.email}] Post deleted.')
+
 
 class MainIndexLink(MenuLink):
      def get_url(self):
@@ -229,11 +251,20 @@ class User(db.Model, UserMixin):
         if on_login:
             new_log.latest_login = datetime.now()
             new_log.latest_ip = request.remote_addr
+            logger.info(f'[User:{current_user.email}, Role:{current_user.role}, IP:{request.remote_addr}] Valid Login Attempt.')
+
+            
+            
+        
 
         db.session.add(new_log)
         db.session.commit()
 
 
+
+@event.listens_for(User, 'after_insert')
+def log_create_post(mapper, connection, target):
+    logger.info(f'[User:{target.email}, Role:{target.role}, IP:{request.remote_addr}] Valid Registration.')
         
        
 

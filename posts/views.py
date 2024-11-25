@@ -70,8 +70,12 @@ def update(id):
 def delete(id):
 
 
+
+
     if check_current_user_created_post(id):
-        config.Post.query.filter_by(id=id).delete()
+
+        post = config.db.session.query(config.Post).filter_by(id=id).first()
+        config.db.session.delete(post)
         config.db.session.commit()
 
         flash('Post deleted', category='success')

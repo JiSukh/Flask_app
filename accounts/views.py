@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, session, get_flashed_messages
+from flask import Blueprint, render_template, flash, redirect, url_for, session, request, get_flashed_messages
 from accounts.forms import RegistrationForm, LoginForm
 from flask_login import login_user, current_user, login_required, logout_user
 from markupsafe import Markup
@@ -97,16 +97,19 @@ def login():
 
         else:
             session[session_id] -= 1
-            attempts = session[session_id]
-
+            attempts_rem = config.maximum_login_attempt - session[session_id] 
 
             if form.recaptcha.errors:
+
+                config.logger.warning(f"[User:{form.email.data}, Attempts:{attempts_rem}, IP:{request.remote_addr}] Invalid login (captcha fail).")
                 flash('Error with recaptcha, please ensure you complete recapture', category='danger')
             else:
+                config.logger.warning(f"[User:{form.email.data}, Attempts:{attempts_rem}, IP:{request.remote_addr}] Invalid login (invalid credentials)")
                 #increase login atemp value       
-                flash(f'Account does not exists or you have entered the wrong password. {attempts} attemp(s) remaining.', category='warning')
+                flash(f'Account does not exists or you have entered the wrong password. {session[session_id]} attemp(s) remaining.', category='warning')
         
     if session[session_id] <= 0:
+        config.logger.warning(f"[User:{form.email.data}, Attempts:{attempts_rem}, IP:{request.remote_addr}] Maximum login attempts reached.")
         return render_template('accounts/login.html')
     else:
         return render_template('accounts/login.html', form = form)
@@ -160,6 +163,7 @@ def registration():
         #add to db
         config.db.session.add(new_user)
         config.db.session.commit()
+        
         new_user.generate_log(on_login=False)
 
         
@@ -169,6 +173,4 @@ def registration():
         return render_template('accounts/setup_mfa.html', secret=new_user.mfa_key, URI = qrURI)
 
     return render_template('accounts/registration.html', form=form)
-
-
 
