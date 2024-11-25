@@ -4,6 +4,7 @@ from flask_login import login_user, current_user, login_required, logout_user
 from markupsafe import Markup
 from flask_limiter import Limiter
 from utils import roles_required
+import argon2
 import pyotp
 import config
 import re
@@ -52,16 +53,20 @@ def login():
 
     if form.validate_on_submit():
 
+
+        ph = argon2.PasswordHasher()
+
         user = config.User.query.filter_by(email=form.email.data).first()
 
         # If user exists, verify the password
-        if user and user.verify_password(input_password=form.password.data):
+
+        if user and ph.verify(user.password, form.password.data):
             ################################testing
             #pin_correct = True
             #mfa_enabled = True
             #################################testing
 
-
+            
             pin_correct = user.verify_mfa_pin(input_pin = form.mfa_pin.data)
             mfa_enabled = user.verify_mfa_enabled()
             #verify MFA enabled
@@ -147,15 +152,16 @@ def registration():
             flash('Password is not strong enough.', category="warning")
             return render_template('accounts/registration.html', form=form)
 
-
-
+        ph = argon2.PasswordHasher()
+        hash_pass = ph.hash(form.password.data)
+        print(hash_pass)
 
         #create new user
         new_user = config.User(email=form.email.data,
                         firstname=form.firstname.data,
                         lastname=form.lastname.data,
                         phone=form.phone.data,
-                        password=form.password.data,
+                        password=hash_pass,
                         mfa_key= pyotp.random_base32(),
                         mfa_enable = False
                         )

@@ -22,3 +22,4 @@ def get_last_n_lines(file_path, n=10):
             return lines[-n:]  
     else:
         return []
+
