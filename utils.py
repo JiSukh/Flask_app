@@ -1,7 +1,7 @@
 from flask import abort
 from flask_login import current_user
 from functools import wraps
-
+import os
 
 def roles_required(*roles):
     def inner_decorator(f):
@@ -14,3 +14,11 @@ def roles_required(*roles):
             return f(*args, **kwargs)
         return wrapped
     return inner_decorator
+
+def get_last_n_lines(file_path, n=10):
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+            return lines[-n:]  
+    else:
+        return []

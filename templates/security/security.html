@@ -3,7 +3,8 @@
 {% block content %}
     <h1>Security</h1>
     <div class="container mt-4">
-        <h1>Log Entries</h1>
+        <div>
+        <h1>Login and registrations</h1>
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -30,5 +31,22 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+        <div>
+            <h1>Latest 10 Logs</h1>
+            <table class="table table-bordered">
+            {% if logs_from_file %}
+                <thead>Logs
+                </thead>
+                {% for logf in logs_from_file %}
+                <tbody>
+                    <tr>{{ logf }}</tr>
+                </tbody>
+                {% endfor %}
+            {% else %}
+                <p>No logs found or log file is empty.</p>
+            {% endif %}
+            </table>
+        </div>
     </div>
 {% endblock %}

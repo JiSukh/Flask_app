@@ -32,7 +32,7 @@ load_dotenv()
 RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_API_KEY')
 RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_API_KEY')
 maximum_login_attempt = 3
-
+LOG_FILE_PATH = './log/logs.log'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -266,7 +266,7 @@ class User(db.Model, UserMixin):
 def log_create_post(mapper, connection, target):
     logger.info(f'[User:{target.email}, Role:{target.role}, IP:{request.remote_addr}] Valid Registration.')
         
-       
+
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
 admin._menu = admin._menu[1:] 
