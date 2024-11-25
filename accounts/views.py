@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, session, get_flashed_messages
 from accounts.forms import RegistrationForm, LoginForm
-from flask_login import login_user, current_user, login_required
+from flask_login import login_user, current_user, login_required, logout_user
 from markupsafe import Markup
 from flask_limiter import Limiter
 from utils import roles_required
@@ -21,6 +21,12 @@ def account():
         return render_template("accounts/account.html", user = current_user)
     else:
         return render_template("accounts/account.html")
+
+@accounts_bp.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 @accounts_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -75,13 +81,19 @@ def login():
                     config.db.session.commit()
                 session[session_id] = config.maximum_login_attempt #reset attempts on successful login
 
+
+                #Add logging
+
+                user.generate_log()
+
+
                 #Check user privilegedes
                 if current_user.role == 'db_admin':
                     return redirect('http://127.0.0.1:5000/admin')
                 elif current_user.role == 'sec_admin':
-                    return render_template('security/security.html')
-                elif current_user.role == 'end_user':#
-                    return redirect(url_for('posts.posts'))
+                    return redirect(url_for('security.security'))
+            
+                return redirect(url_for('posts.posts'))
 
         else:
             session[session_id] -= 1
@@ -144,9 +156,11 @@ def registration():
                         mfa_key= pyotp.random_base32(),
                         mfa_enable = False
                         )
+        
         #add to db
         config.db.session.add(new_user)
         config.db.session.commit()
+        new_user.generate_log(on_login=False)
 
         
 

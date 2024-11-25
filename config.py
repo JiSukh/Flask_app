@@ -1,4 +1,4 @@
-from flask import Flask, abort, url_for
+from flask import Flask, abort, url_for, request
 from datetime import datetime
 #database improt
 from flask_sqlalchemy import SQLAlchemy
@@ -145,14 +145,23 @@ class LogView(ModelView):
         abort(403)
 
 class Log(db.Model):
-    __tablename__ = 'logs'
+    __tablename__ = 'log'
 
     id = db.Column(db.Integer, primary_key=True)
 
-    userid = db.Column(db.Integer, nullable=False)
+    userid = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     reg_time = db.Column(db.DateTime, nullable=False)
     latest_login = db.Column(db.DateTime)
     previous_login = db.Column(db.DateTime)
+    latest_ip = db.Column(db.String())
+    previous_ip = db.Column(db.String())
+
+    user = db.relationship("User", back_populates="log")
+
+    def __init__(self, userid):
+        self.userid = userid
+        self.reg_time = datetime.now()
+
 #users
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -174,6 +183,8 @@ class User(db.Model, UserMixin):
 
     # User posts
     posts = db.relationship("Post", order_by=Post.id, back_populates="user")
+
+    log = db.relationship("Log", uselist=False, back_populates="user")
 
     def __init__(self, email, firstname, lastname, phone, password, mfa_enable, mfa_key):
         self.email = email
@@ -206,6 +217,24 @@ class User(db.Model, UserMixin):
             return True
         else:
             return False
+        
+    def generate_log(self, on_login = True):
+        prev_log = Log.query.filter_by(userid=self.id).order_by(Log.id.desc()).first()
+        new_log = Log(userid = self.id)
+        if prev_log:
+            new_log.reg_time = prev_log.reg_time
+            new_log.previous_login = prev_log.latest_login
+            new_log.previous_ip = prev_log.latest_ip
+
+        if on_login:
+            new_log.latest_login = datetime.now()
+            new_log.latest_ip = request.remote_addr
+
+        db.session.add(new_log)
+        db.session.commit()
+
+
+        
        
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
