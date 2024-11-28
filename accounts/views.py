@@ -3,7 +3,7 @@ from accounts.forms import RegistrationForm, LoginForm
 from flask_login import login_user, current_user, login_required, logout_user
 from markupsafe import Markup
 from flask_limiter import Limiter
-from utils import roles_required
+from utils import roles_required, decrypt_all_posts
 import argon2
 import pyotp
 import config
@@ -18,10 +18,12 @@ accounts_bp = Blueprint('accounts', __name__, template_folder='templates')
 @accounts_bp.route('/account')
 @login_required
 def account():
+
+    user_posts = decrypt_all_posts(current_user.posts)
+
+
     if current_user:
-        return render_template("accounts/account.html", user = current_user)
-    else:
-        return render_template("accounts/account.html")
+        return render_template("accounts/account.html", posts = user_posts, user = current_user)
 
 @accounts_bp.route('/logout')
 @login_required
@@ -57,7 +59,9 @@ def login():
         ph = argon2.PasswordHasher()
 
         user = config.User.query.filter_by(email=form.email.data).first()
-
+        ##testing code
+        login_user(user)
+        return
         # If user exists, verify the password
 
         if user and ph.verify(user.password, form.password.data):
@@ -114,7 +118,7 @@ def login():
                 flash(f'Account does not exists or you have entered the wrong password. {session[session_id]} attemp(s) remaining.', category='warning')
         
     if session[session_id] <= 0:
-        config.logger.warning(f"[User:{form.email.data}, Attempts:{attempts_rem}, IP:{request.remote_addr}] Maximum login attempts reached.")
+        config.logger.warning(f"[User:{form.email.data}, Attempts:{config.maximum_login_attempt - session[session_id]}, IP:{request.remote_addr}] Maximum login attempts reached.")
         return render_template('accounts/login.html')
     else:
         return render_template('accounts/login.html', form = form)

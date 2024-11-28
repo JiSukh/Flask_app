@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, flash, url_for, redirect
 from flask_login import current_user,login_required
-from utils import roles_required
+from utils import roles_required, encrypt_post, decrypt_all_posts, decrypt_post, encrypt_text
 import config
 from posts.forms import PostForm
 from sqlalchemy import desc
@@ -16,10 +16,12 @@ posts_bp = Blueprint('posts', __name__, template_folder='templates')
 def create():
     form = PostForm()
 
-
+    
 
     if form.validate_on_submit():
         new_post = config.Post(userid=current_user.get_id(),title=form.title.data, body=form.body.data)
+
+        new_post = encrypt_post(current_user, new_post)
 
         config.db.session.add(new_post)
         config.db.session.commit()
@@ -33,7 +35,7 @@ def create():
 @login_required
 @roles_required('end_user')
 def posts():
-    all_posts = config.Post.query.order_by(desc('id')).all()
+    all_posts = decrypt_all_posts(config.Post.query.order_by(desc('id')).all())
     return render_template('posts/posts.html', posts=all_posts)
 
 @posts_bp.route('/<int:id>/update', methods=('GET', 'POST'))
@@ -43,15 +45,20 @@ def update(id):
 
 
     if check_current_user_created_post(id):
-        post_to_update = config.Post.query.filter_by(id=id).first()
+        post_to_update = decrypt_post(config.Post.query.filter_by(id=id).first())
 
         if not post_to_update:
+            flash('Post not found.', category='warning')
             return redirect(url_for('posts.posts'))
 
         form = PostForm()
 
         if form.validate_on_submit():
-            post_to_update.update(title=form.title.data, body=form.body.data)
+            new_title = encrypt_text(current_user, form.title.data)
+            new_body = encrypt_text(current_user, form.body.data)
+            
+            post_to_update.update(title=new_title, body=new_body)
+
 
             flash('Post updated', category='success')
             return redirect(url_for('posts.posts'))

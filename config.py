@@ -22,6 +22,8 @@ from flask_login import LoginManager, UserMixin, current_user
 import logging
 import os
 import pyotp
+import base64
+import secrets
 from dotenv import load_dotenv
 from flask_qrcode import QRcode
 
@@ -149,7 +151,7 @@ class PostView(ModelView):
 class UserView(ModelView):
     column_display_pk = True  # optional, but I like to see the IDs in the list
     column_hide_backrefs = False
-    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enable', 'mfa_key')
+    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enable', 'mfa_key', 'salt')
     def is_accessible(self):
         return current_user.is_authenticated and current_user.role == 'db_admin'
     
@@ -202,6 +204,7 @@ class User(db.Model, UserMixin):
     mfa_enable = db.Column(db.Integer, nullable=False)
     active = db.Column(db.Boolean(), nullable=False, default=True)
     role = db.Column(db.String(), nullable=False, default='end_user')
+    salt = db.Column(db.String(100), nullable=False)
 
     # User posts
     posts = db.relationship("Post", order_by=Post.id, back_populates="user")
@@ -217,6 +220,7 @@ class User(db.Model, UserMixin):
         self.mfa_key = mfa_key
         self.mfa_enable = mfa_enable
         self.role = 'end_user'
+        self.salt = base64.b64encode(secrets.token_bytes(32)).decode()
 
     @login_manager.user_loader
     def load_user(id):

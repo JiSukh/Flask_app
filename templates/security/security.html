@@ -36,11 +36,11 @@
             <h1>Latest 10 Logs</h1>
             <table class="table table-bordered">
             {% if logs_from_file %}
-                <thead>Logs
+                <thead><tr><th>Logs</th></tr>
                 </thead>
                 {% for logf in logs_from_file %}
                 <tbody>
-                    <tr>{{ logf }}</tr>
+                    <tr><td>{{ logf }}</td></tr>
                 </tbody>
                 {% endfor %}
             {% else %}
