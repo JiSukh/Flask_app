@@ -1,8 +1,11 @@
 from flask import Blueprint, render_template, flash, url_for, redirect
 from flask_login import current_user,login_required
-from utils import roles_required, encrypt_post, decrypt_all_posts, decrypt_post, encrypt_text
-import config
 from posts.forms import PostForm
+
+
+from utils import roles_required, Sym_Encryption
+from models import Post
+
 from sqlalchemy import desc
 
 
@@ -16,15 +19,8 @@ posts_bp = Blueprint('posts', __name__, template_folder='templates')
 def create():
     form = PostForm()
 
-    
-
     if form.validate_on_submit():
-        new_post = config.Post(userid=current_user.get_id(),title=form.title.data, body=form.body.data)
-
-        new_post = encrypt_post(current_user, new_post)
-
-        config.db.session.add(new_post)
-        config.db.session.commit()
+        Post.create_post(current_user,form.title.data,form.body.data)
 
         flash('Post created', category='success')
         return redirect(url_for('posts.posts'))
@@ -35,7 +31,8 @@ def create():
 @login_required
 @roles_required('end_user')
 def posts():
-    all_posts = decrypt_all_posts(config.Post.query.order_by(desc('id')).all())
+
+    all_posts = Sym_Encryption.decrypt_all_posts(Post.get_all_posts())
     return render_template('posts/posts.html', posts=all_posts)
 
 @posts_bp.route('/<int:id>/update', methods=('GET', 'POST'))
@@ -45,7 +42,7 @@ def update(id):
 
 
     if check_current_user_created_post(id):
-        post_to_update = decrypt_post(config.Post.query.filter_by(id=id).first())
+        post_to_update = Sym_Encryption.decrypt_post(Post.get_post(id))
 
         if not post_to_update:
             flash('Post not found.', category='warning')
@@ -54,14 +51,13 @@ def update(id):
         form = PostForm()
 
         if form.validate_on_submit():
-            new_title = encrypt_text(current_user, form.title.data)
-            new_body = encrypt_text(current_user, form.body.data)
+            new_title = Sym_Encryption.encrypt_text(current_user, form.title.data)
+            new_body = Sym_Encryption.encrypt_text(current_user, form.body.data)
             
             post_to_update.update(title=new_title, body=new_body)
-
-
             flash('Post updated', category='success')
             return redirect(url_for('posts.posts'))
+
 
         form.title.data = post_to_update.title
         form.body.data = post_to_update.body
@@ -80,10 +76,7 @@ def delete(id):
 
 
     if check_current_user_created_post(id):
-
-        post = config.db.session.query(config.Post).filter_by(id=id).first()
-        config.db.session.delete(post)
-        config.db.session.commit()
+        Post.delete(id)
 
         flash('Post deleted', category='success')
         return redirect(url_for('posts.posts'))
@@ -93,4 +86,4 @@ def delete(id):
     
 
 def check_current_user_created_post(id):
-    return current_user.id == config.Post.query.filter_by(id=id).first().userid
+    return current_user.id == Post.query.filter_by(id=id).first().userid

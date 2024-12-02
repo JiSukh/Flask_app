@@ -44,32 +44,32 @@ class Sym_Encryption:
         str_bs = self.cipher.decrypt(str)
         return str_bs.decode()
 
+    @staticmethod
+    def decrypt_post(post):
+        f_cipher = Sym_Encryption(post.user)
+        post.title = f_cipher.decrypt(post.title)
+        post.body = f_cipher.decrypt(post.body)
+        
+        return post
+    @staticmethod
+    def encrypt_post(author_user, post):
+        f_cipher = Sym_Encryption(author_user)
+        post.title = f_cipher.encrypt(post.title)
+        post.body = f_cipher.encrypt(post.body)
 
-def decrypt_post(post):
-    f_cipher = Sym_Encryption(post.user)
-    post.title = f_cipher.decrypt(post.title)
-    post.body = f_cipher.decrypt(post.body)
-    
-    return post
+        return post
+    @staticmethod
+    def encrypt_text(author_user, text):
+        f_cipher = Sym_Encryption(author_user)
 
-def encrypt_post(author_user, post):
-    f_cipher = Sym_Encryption(author_user)
-    post.title = f_cipher.encrypt(post.title)
-    post.body = f_cipher.encrypt(post.body)
+        return f_cipher.encrypt(text)
 
-    return post
-
-def encrypt_text(author_user, text):
-    f_cipher = Sym_Encryption(author_user)
-
-    return f_cipher.encrypt(text)
+    @staticmethod
+    def decrypt_all_posts(posts):
+        newposts = posts
+        for i, post in enumerate(posts):
+            newposts[i] = Sym_Encryption.decrypt_post(post)
 
 
-def decrypt_all_posts(posts):
-    newposts = posts
-    for i, post in enumerate(posts):
-        newposts[i] = decrypt_post(post)
-
-
-    return newposts
+        return newposts
 
