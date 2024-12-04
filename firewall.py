@@ -13,7 +13,6 @@ conditions = {
 }
 
 def check_for_attack():
-    print(request.query_string.decode())
     for attack_type, attack_pattern in conditions.items():
         #Check if the attack pattern matches the request path or query string
         if re.search(attack_pattern, request.path, re.IGNORECASE) or re.search(attack_pattern, request.query_string.decode(), re.IGNORECASE ):
