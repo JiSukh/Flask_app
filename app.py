@@ -63,7 +63,7 @@ def create_app():
 
     app.route('/')(index)
     app.route("/favicon.ico")(favicon)
-    #app.errorhandler(Exception)(handle_error)
+    app.errorhandler(Exception)(handle_error)
     app.before_request(check_for_admin)
 
     return app
