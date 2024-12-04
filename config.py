@@ -14,26 +14,26 @@ load_dotenv()
 
 class Config:
     # General settings
-    SECRET_KEY = os.getenv('SECRET_KEY', 'a_random_secret_key')
-    FLASK_ADMIN_FLUID_LAYOUT = True
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    FLASK_ADMIN_FLUID_LAYOUT = os.getenv('FLASK_ADMIN_FLUID_LAYOUT') == 'True'
 
     # Rate limiting settings
-    RATELIMIT_DEFAULT = "20 per minute; 500 per day"
-    
-    # Database settings
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///csc2031blog.db')
-    SQLALCHEMY_ECHO = True
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    RATELIMIT_DEFAULT = os.getenv('RATELIMIT_DEFAULT')
 
-    # Captcha keys (from environment variables)
+    # Database settings
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI')
+    SQLALCHEMY_ECHO = os.getenv('SQLALCHEMY_ECHO') == 'True'
+    SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS') == 'True'
+
+    # Captcha keys
     RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_API_KEY')
     RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_API_KEY')
 
     # Logging configuration
-    LOG_FILE_PATH = './log/logs.log'
+    LOG_FILE_PATH = os.getenv('LOG_FILE_PATH')
 
     # Maximum login attempts
-    MAX_LOGIN_ATTEMPTS = 3
+    MAX_LOGIN_ATTEMPTS = int(os.getenv('MAX_LOGIN_ATTEMPTS'))
 
 
 

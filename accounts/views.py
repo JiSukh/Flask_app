@@ -48,7 +48,6 @@ def login():
     ##if no attempts in session (new session)
     if session.get('attempts') is None:
         #clear falshed messages
-        session['_flashes'].clear()
         session['attempts'] = 0
 
     rem = handle_invalid_login_session(form.email.data)
