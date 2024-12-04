@@ -13,6 +13,8 @@ from flask_qrcode import QRcode
 import logging
 import os
 
+from firewall import check_for_attack
+
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
@@ -63,8 +65,11 @@ def create_app():
 
     app.route('/')(index)
     app.route("/favicon.ico")(favicon)
-    app.errorhandler(Exception)(handle_error)
+    app.before_request(check_for_attack)
     app.before_request(check_for_admin)
+
+    app.errorhandler(Exception)(handle_error)
+
 
     return app
 
@@ -94,7 +99,8 @@ def handle_error(e):
     if error_code == 403:
         logger = logging.getLogger('logger')
         logger.warning(f'[User:{current_user.email}, Role:{current_user.role}, IP:{request.remote_addr}, URL requested: {request.url}] Unauthorised access request.')
-    return render_template(f'errors/{error_code}.html', error=e), error_code    
+    return render_template(f'errors/{error_code}.html', error=e), error_code   
+
 
 # Before request function
 def check_for_admin(*args, **kw):

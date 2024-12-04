@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Attack detected</h1>
+    {% if label %}
+    <h6>Attack : {{label}}</h6>
+    <p>An attack of type {{label}} has been detected. This could be a false flag. Contact admin for further info.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

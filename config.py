@@ -34,6 +34,3 @@ class Config:
 
     # Maximum login attempts
     MAX_LOGIN_ATTEMPTS = int(os.getenv('MAX_LOGIN_ATTEMPTS'))
-
-
-
