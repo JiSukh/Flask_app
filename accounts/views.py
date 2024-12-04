@@ -50,7 +50,7 @@ def login():
         #clear falshed messages
         session['attempts'] = 0
 
-    rem = handle_invalid_login_session(form.email.data)
+    
     #if session attempts exceeded
     if session['attempts'] > Config.MAX_LOGIN_ATTEMPTS:
         reset_link = url_for('accounts.unlock')
@@ -122,7 +122,8 @@ def login():
 @accounts_bp.route('/unlock')
 def unlock():
     session.pop('attempts', None)
-    session['_flashes'].clear() #removed flashed messages
+    if '_flashes' in session:
+        session['_flashes'].clear() #removed flashed messages
     flash('Login attempts have been reset. You can try logging in again.', category='success')
     return redirect(url_for('accounts.login'))
 
